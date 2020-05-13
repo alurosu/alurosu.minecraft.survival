@@ -33,11 +33,11 @@ public class plugin extends JavaPlugin {
     	
         getServer().getPluginManager().registerEvents(l, this);
         
-		help = "How to use §bsouls§f:";
-		help += "\n/souls §7- shows how many souls you have§f";
-		help += "\n/souls §6give§f [player] [quantity] §7- give souls to another player§f";
-		help += "\n/souls §6buy§f [quantity] §7- trade levels for souls; tax: 1 soul§f";
-		help += "\n/souls §6sell§f [quantity] §7- trade souls for levels; tax: 1 soul§f";
+		help = "How to use Â§bsoulsÂ§f:";
+		help += "\n/souls Â§7- shows how many souls you haveÂ§f";
+		help += "\n/souls Â§6giveÂ§f [player] [quantity] Â§7- give souls to another playerÂ§f";
+		help += "\n/souls Â§6buyÂ§f [quantity] Â§7- trade levels for souls; tax: 1 soulÂ§f";
+		help += "\n/souls Â§6sellÂ§f [quantity] Â§7- trade souls for levels; tax: 1 soulÂ§f";
         
         try {
             Class.forName("com.mysql.jdbc.Driver");
@@ -91,7 +91,7 @@ public class plugin extends JavaPlugin {
     	        		
     	        		if (results.first()) {
     	        			if (results.getInt(2) == 0)
-    	        				p.sendMessage("Your account is §6inactive§f. Please contact an admin on discord.");
+    	        				p.sendMessage("Your account is Â§6inactiveÂ§f. Please contact an admin on discord.");
     	        			else if (getMD5Hash(args[0]).equals(results.getString(1))) {
     	                		l.doLogin(p);
     	                		
@@ -107,16 +107,16 @@ public class plugin extends JavaPlugin {
     	    	        				m = "You received: ";
     	    	        			else
     	    	        				m += ", ";
-    	    	        			m += "§6"+items_results.getInt(2)+" §f"+items_results.getString(1);
+    	    	        			m += "Â§6"+items_results.getInt(2)+" Â§f"+items_results.getString(1);
     	    	                }
     	    	        		
     	    	        		String cleanup = "DELETE FROM login_items WHERE user='"+p.getName()+"'";
     	    	                connection.prepareStatement(cleanup).execute();
     	    	        		
-    	    					p.sendMessage("§aSuccess! §fWelcome back, §6"+p.getName());
+    	    					p.sendMessage("Â§aSuccess! Â§fWelcome back, Â§6"+p.getName());
     	    					p.sendMessage(m);
-    	        		    } else p.sendMessage("§cInvalid password. §fPlease try again.");
-    	        		} else p.sendMessage("You need an account. Please register at §aamongdemons.com");
+    	        		    } else p.sendMessage("Â§cInvalid password. Â§fPlease try again.");
+    	        		} else p.sendMessage("You need an account. Please register at Â§aamongdemons.com");
     				} catch (SQLException e) {
     					e.printStackTrace();
     				} catch (NoSuchAlgorithmException e) {
@@ -125,7 +125,7 @@ public class plugin extends JavaPlugin {
             	}	
         	}
         } else if (label.equalsIgnoreCase("kits") || label.equalsIgnoreCase("kit")) {
-        	p.sendMessage("You can get §6kits §fwith §bsouls §fat §aamongdemons.com");
+        	p.sendMessage("You can get Â§6kits Â§fwith Â§bsouls Â§fat Â§aamongdemons.com");
         } else if (label.equalsIgnoreCase("souls") || label.equalsIgnoreCase("s")) {
         	if (l.isLoggedIn(p)) {
         		if (args.length == 0) {
@@ -136,7 +136,6 @@ public class plugin extends JavaPlugin {
 	    				results = connection.prepareStatement(sql).executeQuery();
 	    	    		if (results.first()) {
 	    	    			p.sendMessage("You have "+displaySouls(results.getInt(1)));
-	    	    			p.setLevel(2);
 	    	    		}
 	    			} catch (SQLException e) {
 	    				e.printStackTrace();
@@ -166,15 +165,15 @@ public class plugin extends JavaPlugin {
 					        						update = "UPDATE users SET souls = souls + "+amount+" WHERE user='"+args[1]+"'";
 													connection.prepareStatement(update).execute();
 													
-					        						p.sendMessage("You gave "+displaySouls(amount)+" to §6"+args[1]+"§f");
-				            	        		} else p.sendMessage("The user §6"+args[1]+"§f does not exist");
-		            	        			} else p.sendMessage("You don't have enough §bsouls.");
+					        						p.sendMessage("You gave "+displaySouls(amount)+" to Â§6"+args[1]+"Â§f");
+				            	        		} else p.sendMessage("The user Â§6"+args[1]+"Â§f does not exist");
+		            	        			} else p.sendMessage("You don't have enough Â§bsouls.");
 		            	        		}
 									} catch (SQLException e) {
 										e.printStackTrace();
 									}
-	        					} else p.sendMessage("[quantity] needs to be over §60");
-        					} else p.sendMessage("You can't send §bsouls§f to yourself");
+	        					} else p.sendMessage("[quantity] needs to be over Â§60");
+        					} else p.sendMessage("You can't send Â§bsoulsÂ§f to yourself");
         				} else showError = true;
         			} else if (args[0].equals("buy")) {       				
         				if (args.length == 2) {
@@ -195,8 +194,8 @@ public class plugin extends JavaPlugin {
 		        						
 		        						p.setLevel(level);
 		        						p.sendMessage("You bought "+displaySouls(amount));
-		        					} else p.sendMessage("You need §6"+(amount+1)+"§f levels to buy "+displaySouls(amount));
-	        					} else p.sendMessage("[quantity] needs to be over §60");
+		        					} else p.sendMessage("You need Â§6"+(amount+1)+"Â§f levels to buy "+displaySouls(amount));
+	        					} else p.sendMessage("[quantity] needs to be over Â§60");
 	        				} else showError = true;
         				} else showError = true;
         			} else if (args[0].equals("sell")) {
@@ -215,16 +214,16 @@ public class plugin extends JavaPlugin {
 					        					int level = p.getLevel();
 					        					level += (amount-1);
 					        					p.setLevel(level);
-				        						p.sendMessage("You sold "+displaySouls(amount)+" for §6"+(amount-1)+"§f levels");
+				        						p.sendMessage("You sold "+displaySouls(amount)+" for Â§6"+(amount-1)+"Â§f levels");
 				        						
 				        						String update = "UPDATE users SET souls = souls - "+amount+" WHERE user='"+p.getName()+"'";
 												connection.prepareStatement(update).execute();
-		            	        			} else p.sendMessage("You don't have enough §bsouls.");
+		            	        			} else p.sendMessage("You don't have enough Â§bsouls.");
 		            	        		}
 									} catch (SQLException e) {
 										e.printStackTrace();
 									}
-	        					} else p.sendMessage("[quantity] needs to be over §61");
+	        					} else p.sendMessage("[quantity] needs to be over Â§61");
 	        				} else showError = true;
         				} else showError = true;
         			} else showError = true;
@@ -239,8 +238,8 @@ public class plugin extends JavaPlugin {
     
     public static String displaySouls(int amount) {
     	if (amount==1)
-    		return "§6"+amount+" §bsoul§f";
-    	return "§6"+amount+" §bsouls§f";
+    		return "Â§6"+amount+" Â§bsoulÂ§f";
+    	return "Â§6"+amount+" Â§bsoulsÂ§f";
     }
     
     public static String getMD5Hash(String s) throws NoSuchAlgorithmException {
