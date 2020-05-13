@@ -1,0 +1,19 @@
+name: amongdemons.com
+main: alurosu.minecraft.survival.plugin
+version: 1.0
+api-version: 1.13
+author: alurosu
+website: alurosu.com
+commands:
+  login:
+    description: login
+    usage: /login
+    aliases: [l]
+  kits:
+    description: kits
+    usage: /kits
+    aliases: [kit]
+  souls:
+    description: souls
+    usage: /souls
+    aliases: [s]
