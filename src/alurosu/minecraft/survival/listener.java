@@ -3,9 +3,12 @@ package alurosu.minecraft.survival;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.bukkit.Chunk;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
@@ -15,7 +18,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-public class listener implements Listener{
+public class listener implements Listener{	
 	private Map<Player, String> coords = new HashMap<>();
 	private Map<Player, Boolean> isLoggedIn = new HashMap<>();
 	private Map<Player, String> IPqueue = new HashMap<>();
@@ -78,8 +81,50 @@ public class listener implements Listener{
     	if (!isLoggedIn.get(p)) {
     		loginMessage(p);
 	        event.setCancelled(true);
+    	} else  {
+    		Chunk t = p.getTargetBlock(null, 100).getChunk();
+        	String c = t.getX() + " " + t.getZ();
+    		if (claims.isClaimed(c, p)) {
+        		p.sendMessage("This chunk is claimed by someone.");
+    	        event.setCancelled(true);
+    		}
     	}
     }
+    
+    @EventHandler
+    public void onBlockPlaceEvent(BlockPlaceEvent event) {
+    	Player p = event.getPlayer();
+    	String c = event.getBlock().getChunk().getX() + " " + event.getBlock().getChunk().getZ();
+    	
+    	if (claims.isClaimed(c, p)) {
+    		p.sendMessage("This chunk is claimed by someone.");
+	        event.setCancelled(true);
+    	} else {
+    		if (event.getBlock().getType().name().contentEquals("EMERALD_BLOCK")) {
+        		claims.addClaim(c, claims.playerID.get(p)+",");
+        		plugin.addClaimToDB(c, claims.playerID.get(p)+",");
+    			p.sendMessage("You have claimed this chunk: §6"+c);
+    		}
+    	}
+    }
+    
+    @EventHandler
+    public void onBlockBreakEvent(BlockBreakEvent event) {
+    	Player p = event.getPlayer();
+		String c = event.getBlock().getChunk().getX() + " " + event.getBlock().getChunk().getZ();
+		
+    	if (claims.isClaimed(c, p)) {
+    		p.sendMessage("This chunk is claimed by someone.");
+	        event.setCancelled(true);
+    	} else {
+    		if (event.getBlock().getType().name().contentEquals("EMERALD_BLOCK")) {
+        		claims.removeClaim(c);
+    			p.sendMessage("You unclaimed this chunk.");
+    		}
+    	}
+    }
+    
+    
     
     @EventHandler
     public void onPlayerDropItemEvent(PlayerDropItemEvent event) {
@@ -88,6 +133,8 @@ public class listener implements Listener{
 			loginMessage(p);
 	        event.setCancelled(true);
     	}
+
+		p.sendMessage(claims.debug());
     }
     
     @EventHandler

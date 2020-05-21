@@ -17,3 +17,12 @@ commands:
     description: souls
     usage: /souls
     aliases: [s]
+  claim:
+    description: claim
+    usage: /claim
+  trust:
+    description: trust
+    usage: /trust
+  untrust:
+    description: untrust
+    usage: /untrust

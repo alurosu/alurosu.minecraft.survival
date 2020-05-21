@@ -3,3 +3,4 @@ mysql:
   pass: ****
   name: ****
   url: ****
+tax: 0.1
