@@ -9,6 +9,14 @@ public class claims {
 	public static Map<Player, Integer> playerID = new HashMap<Player, Integer>();
 	static Map<String, String> chunk = new HashMap<String, String>();
 	
+	public static boolean isClaimed(String c) {
+		String access = chunk.get(c);
+		
+		if (access == null)
+			return false;
+		return true;
+	}
+	
 	public static boolean isClaimed(String c, Player p) {
 		String access = chunk.get(c);
 		
@@ -47,7 +55,7 @@ public class claims {
 		chunk.put(c, access);
 		plugin.updateClaimInDB(c, access);
 		
-    	return "You trust §6"+user+"§f on chunk: §6"+c;
+    	return "You trust §6"+user+"§f on this chunk: §6"+c;
 	}
 	
 	public static String removeTrustedUser(Player p, String user, int id) {
@@ -75,7 +83,7 @@ public class claims {
 		chunk.put(c, new_access);
 		plugin.updateClaimInDB(c, new_access);
 		
-    	return "You trust §6"+user+"§f on chunk: §6"+c;
+    	return "You removed §6"+user+"§f from this chunk: §6"+c;
 	}
 	
 	public static void removeClaim(String c) {

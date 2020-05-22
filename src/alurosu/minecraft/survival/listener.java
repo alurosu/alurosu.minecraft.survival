@@ -4,11 +4,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.bukkit.Chunk;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockBurnEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
@@ -89,6 +92,27 @@ public class listener implements Listener{
     	        event.setCancelled(true);
     		}
     	}
+    }
+    
+    @EventHandler
+    public void onEntityExplodeEvent(EntityExplodeEvent event) {
+    	for(Block b : event.blockList()) {
+    		Chunk t = b.getChunk();
+        	String c = t.getX() + " " + t.getZ();
+    		if (claims.isClaimed(c)) {
+    			event.setCancelled(true);
+    			break;
+    		}
+    	}
+    }
+    
+    @EventHandler
+    public void onBlockBurnEvent(BlockBurnEvent event) {
+    	Chunk t = event.getBlock().getLocation().getChunk();
+    	String c = t.getX() + " " + t.getZ();
+		if (claims.isClaimed(c)) {
+	        event.setCancelled(true);
+		}
     }
     
     @EventHandler
