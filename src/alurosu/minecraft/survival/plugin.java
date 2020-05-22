@@ -39,7 +39,7 @@ public class plugin extends JavaPlugin {
 		help += "\n/souls §7- shows how many souls you have§f";
 		help += "\n/souls §6give§f [player] [quantity] §7- give souls to another player§f";
 		help += "\n/souls §6buy§f [quantity] §7- trade levels for souls§f";
-		help += "\n/souls §6sell§f [quantity] §7- trade souls for levels; tax: "+(tax*100)+"%";
+		help += "\n/souls §6sell§f [quantity] §7- trade souls for levels; tax: "+tax+"%";
         
         try {
             Class.forName("com.mysql.jdbc.Driver");
@@ -131,27 +131,39 @@ public class plugin extends JavaPlugin {
         } else if (label.equalsIgnoreCase("claim")) {
         	p.sendMessage("You can §6claim §fa chunk by placing an §aEmerald Block");
         } else if (label.equalsIgnoreCase("trust")) {
-        	// check if is mine
-        	// check if already added
-        	// add
-        	if (args.length != 1) {
-				if (!args[1].equals(p.getName())) {
+        	if (args.length==1) {
+				if (!args[0].equals(p.getName())) {
 					try {
 						connection = getConnection();
 						
-						String sql = "SELECT id FROM users WHERE user='"+args[1]+"'";
+						String sql = "SELECT id FROM users WHERE user='"+args[0]+"'";
     	        		ResultSet results = connection.prepareStatement(sql).executeQuery();
     	        		
     	        		if (results.first()) {
-    	        			p.sendMessage(claims.addTrustedUser(p, args[1], results.getInt(1)));
-    	        		} p.sendMessage("§6"+args[1]+"§f doesn't exist.");
+    	        			p.sendMessage(claims.addTrustedUser(p, args[0], results.getInt(1)));
+    	        		} else p.sendMessage("§6"+args[0]+"§f doesn't exist.");
 					} catch (SQLException e) {
 						e.printStackTrace();
 					}
 				} else p.sendMessage("You can't trust yourself ..");
         	} else p.sendMessage("Give your friend access by typing: /trust [user]");
         } else if (label.equalsIgnoreCase("untrust")) {
-        	p.sendMessage("untrust");
+        	if (args.length==1) {
+				if (!args[0].equals(p.getName())) {
+					try {
+						connection = getConnection();
+						
+						String sql = "SELECT id FROM users WHERE user='"+args[0]+"'";
+    	        		ResultSet results = connection.prepareStatement(sql).executeQuery();
+    	        		
+    	        		if (results.first()) {
+    	        			p.sendMessage(claims.removeTrustedUser(p, args[0], results.getInt(1)));
+    	        		} else p.sendMessage("§6"+args[0]+"§f doesn't exist.");
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				} else p.sendMessage("You can always trust yourself!");
+        	} else p.sendMessage("Remove user access by typing: /trust [user]");
         } else if (label.equalsIgnoreCase("kits") || label.equalsIgnoreCase("kit")) {
         	p.sendMessage("You can get §6kits §fwith §bsouls §fat §aamongdemons.com");
         } else if (label.equalsIgnoreCase("souls") || label.equalsIgnoreCase("s")) {
@@ -240,13 +252,13 @@ public class plugin extends JavaPlugin {
 		            	        		if (results.first()) {
 		            	        			if (results.getInt(1) >= amount) {
 					        					int level = p.getLevel();
-					        					int diff = (int) (amount-amount*tax);
+					        					int diff = (int)(amount-amount*tax/100);
 					        					level += diff;
 					        					p.setLevel(level);
-				        						p.sendMessage("You sold "+displaySouls(amount)+" for §6"+diff+"§f levels");
-				        						
+
 				        						String update = "UPDATE users SET souls = souls - "+amount+" WHERE user='"+p.getName()+"'";
 												connection.prepareStatement(update).execute();
+				        						p.sendMessage("You sold "+displaySouls(amount)+" for §6"+diff+"§f levels");
 		            	        			} else p.sendMessage("You don't have enough §bsouls.");
 		            	        		}
 									} catch (SQLException e) {
@@ -288,7 +300,9 @@ public class plugin extends JavaPlugin {
     public static void addClaimToDB(String c, String access) {    	
     	try {
 			connection = getConnection();
-			connection.prepareStatement("INSERT INTO claims (chunk, access) VALUES ('"+c+"', '"+access+"')").execute();
+			Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+			
+			connection.prepareStatement("INSERT INTO claims (chunk, access, modified) VALUES ('"+c+"', '"+access+"', '"+timestamp.getTime()+"')").execute();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -296,7 +310,7 @@ public class plugin extends JavaPlugin {
     
     public static void removeClaimFromDB(String c) {    	
     	try {
-			connection = getConnection();
+			connection = getConnection();			
 			connection.prepareStatement("DELETE FROM claims WHERE chunk = '"+c+"'").execute();
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -306,7 +320,9 @@ public class plugin extends JavaPlugin {
     public static void updateClaimInDB(String c, String access) {    	
     	try {
 			connection = getConnection();
-			connection.prepareStatement("UPDATE claims SET access = '"+access+"' WHERE c = '"+c+"'").execute();
+			Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+			
+			connection.prepareStatement("UPDATE claims SET access = '"+access+"', modified = '"+timestamp.getTime()+"' WHERE chunk = '"+c+"'").execute();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}

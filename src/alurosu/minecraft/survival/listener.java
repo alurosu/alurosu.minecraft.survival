@@ -100,7 +100,7 @@ public class listener implements Listener{
     		p.sendMessage("This chunk is claimed by someone.");
 	        event.setCancelled(true);
     	} else {
-    		if (event.getBlock().getType().name().contentEquals("EMERALD_BLOCK")) {
+    		if (event.getBlock().getType().name().contentEquals("EMERALD_BLOCK")) {    			
         		claims.addClaim(c, claims.playerID.get(p)+",");
         		plugin.addClaimToDB(c, claims.playerID.get(p)+",");
     			p.sendMessage("You have claimed this chunk: §6"+c);
@@ -134,7 +134,7 @@ public class listener implements Listener{
 	        event.setCancelled(true);
     	}
 
-		p.sendMessage(claims.debug());
+		//p.sendMessage(claims.debug());
     }
     
     @EventHandler

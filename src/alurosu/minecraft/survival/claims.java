@@ -50,6 +50,34 @@ public class claims {
     	return "You trust §6"+user+"§f on chunk: §6"+c;
 	}
 	
+	public static String removeTrustedUser(Player p, String user, int id) {
+    	String c = p.getLocation().getChunk().getX() + " " + p.getLocation().getChunk().getZ();
+    	String access = chunk.get(c);
+    	String new_access = "";
+    	
+    	if (access == null)
+			return "You do not own this chunk.";
+    	
+    	int myID = playerID.get(p);
+    	
+    	boolean isMine = false;
+		for (String s : access.split(",")) {
+			int temp = Integer.parseInt(s);
+			if (temp == myID)
+				isMine = true;
+			if (temp != id)
+				new_access += temp + ",";
+		}
+		
+		if (!isMine)
+			return "You do not own this chunk.";
+		
+		chunk.put(c, new_access);
+		plugin.updateClaimInDB(c, new_access);
+		
+    	return "You trust §6"+user+"§f on chunk: §6"+c;
+	}
+	
 	public static void removeClaim(String c) {
 		chunk.remove(c);
 		plugin.removeClaimFromDB(c);
