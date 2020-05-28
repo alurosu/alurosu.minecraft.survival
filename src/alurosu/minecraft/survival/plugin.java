@@ -50,7 +50,6 @@ public class plugin extends JavaPlugin {
         }
         try {
             connection = DriverManager.getConnection(db_url,db_user,db_pass);
-            loadClaimsFromDB();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -89,14 +88,13 @@ public class plugin extends JavaPlugin {
             	else {
     				try {
     					connection = getConnection();
-    	        		String sql = "SELECT pass, active, id FROM users WHERE user='"+p.getName()+"'";
+    	        		String sql = "SELECT pass, active, souls FROM users WHERE user='"+p.getName()+"'";
     	        		ResultSet results = connection.prepareStatement(sql).executeQuery();
     	        		
     	        		if (results.first()) {
     	        			if (results.getInt(2) == 0)
     	        				p.sendMessage("Your account is §6inactive§f. Please contact an admin on discord.");
     	        			else if (getMD5Hash(args[0]).equals(results.getString(1))) {
-    	        				claims.playerID.put(p, results.getInt(3));
     	                		l.doLogin(p);
     	                		
     	                		// give items
@@ -128,44 +126,12 @@ public class plugin extends JavaPlugin {
     				}
             	}	
         	}
-        } else if (label.equalsIgnoreCase("claim")) {
-        	p.sendMessage("You can §6claim §fa chunk by placing an §aEmerald Block");
-        } else if (label.equalsIgnoreCase("trust")) {
-        	if (args.length==1) {
-				if (!args[0].equals(p.getName())) {
-					try {
-						connection = getConnection();
-						
-						String sql = "SELECT id FROM users WHERE user='"+args[0]+"'";
-    	        		ResultSet results = connection.prepareStatement(sql).executeQuery();
-    	        		
-    	        		if (results.first()) {
-    	        			p.sendMessage(claims.addTrustedUser(p, args[0], results.getInt(1)));
-    	        		} else p.sendMessage("§6"+args[0]+"§f doesn't exist.");
-					} catch (SQLException e) {
-						e.printStackTrace();
-					}
-				} else p.sendMessage("You can't trust yourself ..");
-        	} else p.sendMessage("Give your friend access by typing: /trust [user]");
-        } else if (label.equalsIgnoreCase("untrust")) {
-        	if (args.length==1) {
-				if (!args[0].equals(p.getName())) {
-					try {
-						connection = getConnection();
-						
-						String sql = "SELECT id FROM users WHERE user='"+args[0]+"'";
-    	        		ResultSet results = connection.prepareStatement(sql).executeQuery();
-    	        		
-    	        		if (results.first()) {
-    	        			p.sendMessage(claims.removeTrustedUser(p, args[0], results.getInt(1)));
-    	        		} else p.sendMessage("§6"+args[0]+"§f doesn't exist.");
-					} catch (SQLException e) {
-						e.printStackTrace();
-					}
-				} else p.sendMessage("You can always trust yourself!");
-        	} else p.sendMessage("Remove user access by typing: /trust [user]");
-        } else if (label.equalsIgnoreCase("kits") || label.equalsIgnoreCase("kit")) {
-        	p.sendMessage("You can get §6kits §fwith §bsouls §fat §aamongdemons.com");
+        } else if (label.equalsIgnoreCase("kits") || label.equalsIgnoreCase("kit") || label.equalsIgnoreCase("shop")) {
+        	p.sendMessage("You can trade §bsouls §ffor §6kits §fat §aamongdemons.com");
+        } else if (label.equalsIgnoreCase("help") || label.equalsIgnoreCase("info")) {
+        	p.sendMessage("Server §6info §fat §aamongdemons.com/minecraft/server-info");
+        } else if (label.equalsIgnoreCase("map")) {
+        	p.sendMessage("Need a map? We have one at §aamongdemons.com");
         } else if (label.equalsIgnoreCase("souls") || label.equalsIgnoreCase("s")) {
         	if (l.isLoggedIn(p)) {
         		if (args.length == 0) {
@@ -297,49 +263,40 @@ public class plugin extends JavaPlugin {
     	return result; 
     }
     
-    public static void addClaimToDB(String c, String access) {    	
-    	try {
-			connection = getConnection();
-			Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-			
-			connection.prepareStatement("INSERT INTO claims (chunk, access, modified) VALUES ('"+c+"', '"+access+"', '"+timestamp.getTime()+"')").execute();
+    public static String removeSouls(Player p, int amount) {
+		try {
+	    	connection = getConnection();
+
+	    	// get souls
+	    	String sql = "SELECT souls FROM users WHERE user='"+p.getName()+"'";
+    		ResultSet results = connection.prepareStatement(sql).executeQuery();
+    		
+    		if (results.first()) {
+    			if (results.getInt(1) >= amount) { 
+    				// update souls
+    		    	String update = "UPDATE users SET souls = souls - "+amount+" WHERE user='"+p.getName()+"'";
+    				connection.prepareStatement(update).execute();
+    				return "success";
+    			} return "Not enough §bsouls§f: you have §6" + results.getInt(1) + "§f and need §6" + amount;
+    		} return "There is no such user";
 		} catch (SQLException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
+			return "Something went wrong. Please try again.";
 		}
     }
     
-    public static void removeClaimFromDB(String c) {    	
-    	try {
-			connection = getConnection();			
-			connection.prepareStatement("DELETE FROM claims WHERE chunk = '"+c+"'").execute();
+    public static String addSouls(Player p, int amount) {
+		try {
+	    	connection = getConnection();
+
+	    	String update = "UPDATE users SET souls = souls + "+amount+" WHERE user='"+p.getName()+"'";
+			connection.prepareStatement(update).execute();
+			return "success";
 		} catch (SQLException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
-    }
-    
-    public static void updateClaimInDB(String c, String access) {    	
-    	try {
-			connection = getConnection();
-			Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-			
-			connection.prepareStatement("UPDATE claims SET access = '"+access+"', modified = '"+timestamp.getTime()+"' WHERE chunk = '"+c+"'").execute();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-    }
-    
-    public static void loadClaimsFromDB() {
-    	try {
-			connection = getConnection();
-			
-			String items_sql = "SELECT chunk, access FROM claims";
-			ResultSet items_results = connection.prepareStatement(items_sql).executeQuery();
-			
-			while(items_results.next()){
-				claims.addClaim(items_results.getString(1), items_results.getString(2));
-	        }
-		} catch (SQLException e) {
-			e.printStackTrace();
+			return "Something went wrong. Please try again.";
 		}
     }
 }

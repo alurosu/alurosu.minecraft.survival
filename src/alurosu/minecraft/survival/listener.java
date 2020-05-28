@@ -3,15 +3,10 @@ package alurosu.minecraft.survival;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.bukkit.Chunk;
-import org.bukkit.block.Block;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockBurnEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
@@ -20,6 +15,9 @@ import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+
+import me.ryanhamshire.GriefPrevention.events.ClaimDeletedEvent;
+import me.ryanhamshire.GriefPrevention.events.ClaimCreatedEvent;
 
 public class listener implements Listener{	
 	private Map<Player, String> coords = new HashMap<>();
@@ -38,6 +36,7 @@ public class listener implements Listener{
         	isLoggedIn.put(p, false);
         	coords.put(p, p.getLocation().getX()+"-"+p.getLocation().getY()+"-"+p.getLocation().getZ());
         	p.setInvulnerable(true);
+        	plugin.connection = plugin.getConnection();
     	}
     }
     
@@ -84,71 +83,8 @@ public class listener implements Listener{
     	if (!isLoggedIn.get(p)) {
     		loginMessage(p);
 	        event.setCancelled(true);
-    	} else  {
-    		Chunk t = p.getTargetBlock(null, 100).getChunk();
-        	String c = t.getX() + " " + t.getZ();
-    		if (claims.isClaimed(c, p)) {
-        		p.sendMessage("This chunk is claimed by someone.");
-    	        event.setCancelled(true);
-    		}
     	}
     }
-    
-    @EventHandler
-    public void onEntityExplodeEvent(EntityExplodeEvent event) {
-    	for(Block b : event.blockList()) {
-    		Chunk t = b.getChunk();
-        	String c = t.getX() + " " + t.getZ();
-    		if (claims.isClaimed(c)) {
-    			event.setCancelled(true);
-    			break;
-    		}
-    	}
-    }
-    
-    @EventHandler
-    public void onBlockBurnEvent(BlockBurnEvent event) {
-    	Chunk t = event.getBlock().getLocation().getChunk();
-    	String c = t.getX() + " " + t.getZ();
-		if (claims.isClaimed(c)) {
-	        event.setCancelled(true);
-		}
-    }
-    
-    @EventHandler
-    public void onBlockPlaceEvent(BlockPlaceEvent event) {
-    	Player p = event.getPlayer();
-    	String c = event.getBlock().getChunk().getX() + " " + event.getBlock().getChunk().getZ();
-    	
-    	if (claims.isClaimed(c, p)) {
-    		p.sendMessage("This chunk is claimed by someone.");
-	        event.setCancelled(true);
-    	} else {
-    		if (event.getBlock().getType().name().contentEquals("EMERALD_BLOCK")) {    			
-        		claims.addClaim(c, claims.playerID.get(p)+",");
-        		plugin.addClaimToDB(c, claims.playerID.get(p)+",");
-    			p.sendMessage("You have claimed this chunk: §6"+c);
-    		}
-    	}
-    }
-    
-    @EventHandler
-    public void onBlockBreakEvent(BlockBreakEvent event) {
-    	Player p = event.getPlayer();
-		String c = event.getBlock().getChunk().getX() + " " + event.getBlock().getChunk().getZ();
-		
-    	if (claims.isClaimed(c, p)) {
-    		p.sendMessage("This chunk is claimed by someone.");
-	        event.setCancelled(true);
-    	} else {
-    		if (event.getBlock().getType().name().contentEquals("EMERALD_BLOCK")) {
-        		claims.removeClaim(c);
-    			p.sendMessage("You unclaimed this chunk.");
-    		}
-    	}
-    }
-    
-    
     
     @EventHandler
     public void onPlayerDropItemEvent(PlayerDropItemEvent event) {
@@ -157,8 +93,6 @@ public class listener implements Listener{
 			loginMessage(p);
 	        event.setCancelled(true);
     	}
-
-		//p.sendMessage(claims.debug());
     }
     
     @EventHandler
@@ -186,4 +120,34 @@ public class listener implements Listener{
     public void loginMessage(Player p) {
     	p.sendMessage("/login [pass] or register at §aamongdemons.com");
     }
+    
+    // grief prevention cost
+    @EventHandler
+    public void onClaimCreatedEvent(ClaimCreatedEvent event) {
+    	int x = event.getClaim().getArea();
+    	int amount = (int) (x * 0.2);
+    	
+    	Player p = (Player) event.getCreator();
+    	
+    	String temp = plugin.removeSouls(p, amount);
+    	if (temp.equals("success")) {
+    		p.sendMessage("You traded §6" + amount + " §bsouls§f to claim an area of §6" + x + "§f blocks");
+    	} else {
+    		p.sendMessage(temp);
+    		event.setCancelled(true);
+    	}
+    }
+    
+    @EventHandler
+    public void onClaimDeletedEvent(ClaimDeletedEvent event) {
+    	int x = event.getClaim().getArea();
+    	int amount = (int) (x * 0.2);
+    	
+    	Player p = Bukkit.getPlayer(event.getClaim().getOwnerName());
+    	String temp = plugin.addSouls(p, amount);
+    	
+    	if (temp.equals("success")) {
+    		p.sendMessage("You received §6" + amount + " §bsouls");
+    	} else p.sendMessage(temp);
+    }    
 }

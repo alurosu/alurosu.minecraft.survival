@@ -1,6 +1,7 @@
 name: amongdemons.com
 main: alurosu.minecraft.survival.plugin
-version: 1.0
+version: 2.0
+depend: [GriefPrevention]
 api-version: 1.13
 author: alurosu
 website: alurosu.com
@@ -12,17 +13,15 @@ commands:
   kits:
     description: kits
     usage: /kits
-    aliases: [kit]
+    aliases: [kit, shop]
   souls:
     description: souls
     usage: /souls
     aliases: [s]
-  claim:
-    description: claim
-    usage: /claim
-  trust:
-    description: trust
-    usage: /trust
-  untrust:
-    description: untrust
-    usage: /untrust
+  map:
+    description: map
+    usage: /map
+  help:
+    description: help
+    usage: /help
+    aliases: [info]
