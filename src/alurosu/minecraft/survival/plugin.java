@@ -117,7 +117,6 @@ public class plugin extends JavaPlugin {
     
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
     	Player p = (Player) sender;
-    	p.sendMessage("vault: "+provider.getBalance(p));
     	if (label.equalsIgnoreCase("login") || label.equalsIgnoreCase("l")) {
         	if (l.isLoggedIn(p))
         		p.sendMessage("You are already logged in.");
@@ -174,17 +173,7 @@ public class plugin extends JavaPlugin {
         } else if (label.equalsIgnoreCase("souls") || label.equalsIgnoreCase("s")) {
         	if (l.isLoggedIn(p)) {
         		if (args.length == 0) {
-	    			try {
-	    	        	connection = getConnection();
-	    	    		String sql = "SELECT souls FROM users WHERE user='"+p.getName()+"'";
-	    	    		ResultSet results;
-	    				results = connection.prepareStatement(sql).executeQuery();
-	    	    		if (results.first()) {
-	    	    			p.sendMessage("You have "+displaySouls(results.getInt(1)));
-	    	    		}
-	    			} catch (SQLException e) {
-	    				e.printStackTrace();
-	    			}
+	    			p.sendMessage("You have "+displaySouls((int)provider.getBalance(p)));
         		} else {
         			Boolean showError = false;
         			
@@ -194,29 +183,24 @@ public class plugin extends JavaPlugin {
         					if (!args[1].equals(p.getName())) {
 	        					int amount = Integer.parseInt(args[2]);
 	        					if (amount > 0) {
-	        						try {
-		        						connection = getConnection();
-		        						
-		        						String sql = "SELECT souls FROM users WHERE user='"+p.getName()+"'";
-		            	        		ResultSet results = connection.prepareStatement(sql).executeQuery();
-		            	        		
-		            	        		if (results.first()) {
-		            	        			if (results.getInt(1) >= amount) {
-				        						String target_sql = "SELECT souls FROM users WHERE user='"+args[1]+"'";
-				            	        		ResultSet target_results = connection.prepareStatement(target_sql).executeQuery();
-				            	        		if (target_results.first()) {
-					        						String update = "UPDATE users SET souls = souls - "+amount+" WHERE user='"+p.getName()+"'";
-													connection.prepareStatement(update).execute();
-					        						update = "UPDATE users SET souls = souls + "+amount+" WHERE user='"+args[1]+"'";
-													connection.prepareStatement(update).execute();
-													
-					        						p.sendMessage("You gave "+displaySouls(amount)+" to §6"+args[1]+"§f");
-				            	        		} else p.sendMessage("The user §6"+args[1]+"§f does not exist");
-		            	        			} else p.sendMessage("You don't have enough §bsouls.");
-		            	        		}
-									} catch (SQLException e) {
-										e.printStackTrace();
-									}
+	        						if (provider.has(p,  amount)) {
+		        						try {
+			        						connection = getConnection();
+			        						
+			        						String target_sql = "SELECT souls FROM users WHERE user='"+args[1]+"'";
+			            	        		ResultSet target_results = connection.prepareStatement(target_sql).executeQuery();
+			            	        		if (target_results.first()) {
+			            	        			provider.withdrawPlayer(p, amount);
+												String update = "UPDATE users SET souls = souls + "+amount+" WHERE user='"+args[1]+"'";
+												connection.prepareStatement(update).execute();
+												
+				        						p.sendMessage("You gave "+displaySouls(amount)+" to §6"+args[1]+"§f");
+			            	        		} else p.sendMessage("The user §6"+args[1]+"§f does not exist");
+
+										} catch (SQLException e) {
+											e.printStackTrace();
+										}
+	        						} else p.sendMessage("You don't have enough §bsouls.");
 	        					} else p.sendMessage("[quantity] needs to be over §60");
         					} else p.sendMessage("You can't send §bsouls§f to yourself");
         				} else showError = true;
@@ -228,7 +212,7 @@ public class plugin extends JavaPlugin {
 		        					int level = p.getLevel();
 		        					level -= amount;
 		        					if (level >= 0) {
-		        						addSouls(p,amount);
+			        					provider.depositPlayer(p, amount);
 		        						
 		        						p.setLevel(level);
 		        						p.sendMessage("You bought "+displaySouls(amount));
@@ -241,27 +225,19 @@ public class plugin extends JavaPlugin {
 	        				if (args[1].matches("\\-?\\d+")) {
 	        					int amount = Integer.parseInt(args[1]);
 	        					if (amount > 1) {
-	    	    	                try {
-		        						connection = getConnection();
-		        						
-		        						String sql = "SELECT souls FROM users WHERE user='"+p.getName()+"'";
-		            	        		ResultSet results = connection.prepareStatement(sql).executeQuery();
-		            	        		
-		            	        		if (results.first()) {
-		            	        			if (results.getInt(1) >= amount) {
-					        					int level = p.getLevel();
-					        					int diff = (int)(amount-amount*tax/100);
-					        					level += diff;
-					        					p.setLevel(level);
-
-				        						String update = "UPDATE users SET souls = souls - "+amount+" WHERE user='"+p.getName()+"'";
-												connection.prepareStatement(update).execute();
-				        						p.sendMessage("You sold "+displaySouls(amount)+" for §6"+diff+"§f levels");
-		            	        			} else p.sendMessage("You don't have enough §bsouls.");
-		            	        		}
-									} catch (SQLException e) {
-										e.printStackTrace();
-									}
+	        						if (provider.has(p, amount)) {
+			        					provider.withdrawPlayer(p, amount);
+			        					
+			        					int level = p.getLevel();
+			        					int diff = (int)(amount-amount*tax/100);
+			        					level += diff;
+			        					p.setLevel(level);
+			        					
+			        					if (diff==1)
+		        							p.sendMessage("You sold "+displaySouls(amount)+" for §6"+diff+"§f level");
+			        					else
+			        						p.sendMessage("You sold "+displaySouls(amount)+" for §6"+diff+"§f levels");
+	        						} else p.sendMessage("You don't have enough §bsouls.");
 	        					} else p.sendMessage("[quantity] needs to be over §61");
 	        				} else showError = true;
         				} else showError = true;
@@ -293,40 +269,5 @@ public class plugin extends JavaPlugin {
     	    }
     	}
     	return result; 
-    }
-    
-    public static String removeSouls(Player p, int amount) {
-		try {
-	    	connection = getConnection();
-
-	    	// get souls
-	    	String sql = "SELECT souls FROM users WHERE user='"+p.getName()+"'";
-    		ResultSet results = connection.prepareStatement(sql).executeQuery();
-    		
-    		if (results.first()) {
-    			if (results.getInt(1) >= amount) { 
-    				// update souls
-    		    	String update = "UPDATE users SET souls = souls - "+amount+" WHERE user='"+p.getName()+"'";
-    				connection.prepareStatement(update).execute();
-    				return "success";
-    			} return "Not enough §bsouls§f: you have §6" + results.getInt(1) + "§f and need §6" + amount;
-    		} return "There is no such user";
-		} catch (SQLException e) {
-			e.printStackTrace();
-			return "Something went wrong. Please try again.";
-		}
-    }
-    
-    public static String addSouls(Player p, int amount) {
-		try {
-	    	connection = getConnection();
-
-	    	String update = "UPDATE users SET souls = souls + "+amount+" WHERE user='"+p.getName()+"'";
-			connection.prepareStatement(update).execute();
-			return "success";
-		} catch (SQLException e) {
-			e.printStackTrace();
-			return "Something went wrong. Please try again.";
-		}
     }
 }
