@@ -3,7 +3,6 @@ package alurosu.minecraft.survival;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -15,9 +14,6 @@ import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-
-import me.ryanhamshire.GriefPrevention.events.ClaimDeletedEvent;
-import me.ryanhamshire.GriefPrevention.events.ClaimCreatedEvent;
 
 public class listener implements Listener{	
 	private Map<Player, String> coords = new HashMap<>();
@@ -120,34 +116,4 @@ public class listener implements Listener{
     public void loginMessage(Player p) {
     	p.sendMessage("/login [pass] or register at §aamongdemons.com");
     }
-    
-    // grief prevention cost
-    @EventHandler
-    public void onClaimCreatedEvent(ClaimCreatedEvent event) {
-    	int x = event.getClaim().getArea();
-    	int amount = (int) (x * 0.2);
-    	
-    	Player p = (Player) event.getCreator();
-    	
-    	String temp = plugin.removeSouls(p, amount);
-    	if (temp.equals("success")) {
-    		p.sendMessage("You traded §6" + amount + " §bsouls§f to claim an area of §6" + x + "§f blocks");
-    	} else {
-    		p.sendMessage(temp);
-    		event.setCancelled(true);
-    	}
-    }
-    
-    @EventHandler
-    public void onClaimDeletedEvent(ClaimDeletedEvent event) {
-    	int x = event.getClaim().getArea();
-    	int amount = (int) (x * 0.2);
-    	
-    	Player p = Bukkit.getPlayer(event.getClaim().getOwnerName());
-    	String temp = plugin.addSouls(p, amount);
-    	
-    	if (temp.equals("success")) {
-    		p.sendMessage("You received §6" + amount + " §bsouls");
-    	} else p.sendMessage(temp);
-    }    
 }

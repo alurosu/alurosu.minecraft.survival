@@ -1,7 +1,8 @@
 name: amongdemons.com
 main: alurosu.minecraft.survival.plugin
-version: 2.0
-depend: [GriefPrevention]
+version: 3.0
+depend: [Vault]
+loadbefore: [GriefPrevention]
 api-version: 1.13
 author: alurosu
 website: alurosu.com

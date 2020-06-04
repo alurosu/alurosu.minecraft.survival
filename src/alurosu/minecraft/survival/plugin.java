@@ -5,13 +5,18 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.*;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.PluginManager;
+import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import net.milkbowl.vault.economy.Economy;
 
 public class plugin extends JavaPlugin {	
 	private static String db_user;
@@ -22,7 +27,17 @@ public class plugin extends JavaPlugin {
 	static String help;
 	static double tax;
 	
+    public static Economy provider;
+    public PluginManager pluginManager;
+	
 	private listener l = new listener();
+	
+	
+	@Override
+    public void onLoad() {
+        pluginManager = getServer().getPluginManager();
+    }
+	
     @Override
     public void onEnable() {
 		this.saveDefaultConfig();
@@ -45,13 +60,34 @@ public class plugin extends JavaPlugin {
             Class.forName("com.mysql.jdbc.Driver");
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
-            System.err.println("jdbc driver unavailable!");
+            System.out.println("[amongdemons.com] jdbc driver unavailable!");
             return;
         }
         try {
             connection = DriverManager.getConnection(db_url,db_user,db_pass);
         } catch (SQLException e) {
             e.printStackTrace();
+        }
+        
+        hookVault();
+    }
+    
+    public void hookVault() {
+        if (pluginManager.getPlugin("Vault") == null) {
+        	System.out.println("[amongdemons.com] Vault isn't installed - this somehow got past the compatibility check - hook task aborted.");
+        } else {
+            provider = new myeconomy();
+            Bukkit.getServicesManager().register(Economy.class, provider, this, ServicePriority.Highest);
+            System.out.println("[amongdemons.com] Hooked to Vault successfuly.");
+        }
+    }
+
+    public void unhookVault() {
+        if (pluginManager.getPlugin("Vault") == null) {
+        	System.out.println("[amongdemons.com] Vault isn't installed - unhook task aborted.");
+        } else {
+            Bukkit.getServicesManager().unregister(Economy.class, provider);
+            System.out.println("[amongdemons.com] Unhooked from Vault successfully.");
         }
     }
     
@@ -75,11 +111,14 @@ public class plugin extends JavaPlugin {
         } catch(Exception e) {
             e.printStackTrace();
         }
+        
+        unhookVault();
     }
     
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
     	Player p = (Player) sender;
-        if (label.equalsIgnoreCase("login") || label.equalsIgnoreCase("l")) {
+    	p.sendMessage("vault: "+provider.getBalance(p));
+    	if (label.equalsIgnoreCase("login") || label.equalsIgnoreCase("l")) {
         	if (l.isLoggedIn(p))
         		p.sendMessage("You are already logged in.");
         	else {
@@ -94,7 +133,7 @@ public class plugin extends JavaPlugin {
     	        		if (results.first()) {
     	        			if (results.getInt(2) == 0)
     	        				p.sendMessage("Your account is §6inactive§f. Please contact an admin on discord.");
-    	        			else if (getMD5Hash(args[0]).equals(results.getString(1))) {
+    	        			else if (getMD5Hash(args[0]).equals(results.getString(1))) {    	        				
     	                		l.doLogin(p);
     	                		
     	                		// give items
@@ -189,14 +228,7 @@ public class plugin extends JavaPlugin {
 		        					int level = p.getLevel();
 		        					level -= amount;
 		        					if (level >= 0) {
-		    	    	                try {
-			        						connection = getConnection();
-			        						
-			        						String update = "UPDATE users SET souls = souls + "+amount+" WHERE user='"+p.getName()+"'";
-											connection.prepareStatement(update).execute();
-										} catch (SQLException e) {
-											e.printStackTrace();
-										}
+		        						addSouls(p,amount);
 		        						
 		        						p.setLevel(level);
 		        						p.sendMessage("You bought "+displaySouls(amount));
@@ -280,7 +312,6 @@ public class plugin extends JavaPlugin {
     			} return "Not enough §bsouls§f: you have §6" + results.getInt(1) + "§f and need §6" + amount;
     		} return "There is no such user";
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return "Something went wrong. Please try again.";
 		}
@@ -294,7 +325,6 @@ public class plugin extends JavaPlugin {
 			connection.prepareStatement(update).execute();
 			return "success";
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return "Something went wrong. Please try again.";
 		}
