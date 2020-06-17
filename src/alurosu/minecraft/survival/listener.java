@@ -30,9 +30,9 @@ public class listener implements Listener{
     	} else {
         	IPqueue.put(p, parts[0]);
         	isLoggedIn.put(p, false);
-        	coords.put(p, p.getLocation().getX()+"-"+p.getLocation().getY()+"-"+p.getLocation().getZ());
+        	coords.put(p, p.getLocation().getX()+"-"+p.getLocation().getZ());
         	p.setInvulnerable(true);
-        	plugin.connection = plugin.getConnection();
+        	plugin.reloadConnection(p);
     	}
     }
     
@@ -95,7 +95,7 @@ public class listener implements Listener{
     public void onPlayerMoveEvent(PlayerMoveEvent event) {
     	Player p = event.getPlayer();
     	if (!isLoggedIn.get(p)) {
-    		String s = event.getTo().getX()+"-"+event.getTo().getY()+"-"+event.getTo().getZ();
+    		String s = event.getTo().getX()+"-"+event.getTo().getZ();
     		if (!s.equals(coords.get(p))) {
     			loginMessage(p);
     	        event.setCancelled(true);

@@ -11,10 +11,18 @@ commands:
     description: login
     usage: /login
     aliases: [l]
+  register:
+    description: register
+    usage: /register
+    aliases: [r, reg]
   kits:
     description: kits
     usage: /kits
     aliases: [kit, shop]
+  claimkits:
+    description: claimkits
+    usage: /claimkits
+    aliases: [claimkit]
   souls:
     description: souls
     usage: /souls

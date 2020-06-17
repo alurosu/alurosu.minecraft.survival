@@ -45,7 +45,7 @@ public class plugin extends JavaPlugin {
     	
     	db_user = config.getString("mysql.user");
     	db_pass = config.getString("mysql.pass");
-		db_url = "jdbc:mysql://"+config.getString("mysql.url")+":3306/" + config.getString("mysql.name")+"?useSSL=false";
+		db_url = "jdbc:mysql://"+config.getString("mysql.url")+":3306/" + config.getString("mysql.name")+"?useSSL=false&autoReconnect=true";
 		tax = config.getDouble("tax");
     	
         getServer().getPluginManager().registerEvents(l, this);
@@ -134,27 +134,9 @@ public class plugin extends JavaPlugin {
     	        				p.sendMessage("Your account is §6inactive§f. Please contact an admin on discord.");
     	        			else if (getMD5Hash(args[0]).equals(results.getString(1))) {    	        				
     	                		l.doLogin(p);
-    	                		
-    	                		// give items
-    	                		String items_sql = "SELECT item, count FROM login_items WHERE user='"+p.getName()+"'";
-    	    	        		ResultSet items_results = connection.prepareStatement(items_sql).executeQuery();
-    	    	        		
-    	    	        		String m = "";
-    	    	        		while(items_results.next()){    	    	        	        
-    	    	        			p.getInventory().addItem(new ItemStack(Material.getMaterial(items_results.getString(1)), items_results.getInt(2)));
-    	    	        			
-    	    	        			if (m.isEmpty())
-    	    	        				m = "You received: ";
-    	    	        			else
-    	    	        				m += ", ";
-    	    	        			m += "§6"+items_results.getInt(2)+" §f"+items_results.getString(1);
-    	    	                }
-    	    	        		
-    	    	        		String cleanup = "DELETE FROM login_items WHERE user='"+p.getName()+"'";
-    	    	                connection.prepareStatement(cleanup).execute();
-    	    	        		
-    	    					p.sendMessage("§aSuccess! §fWelcome back, §6"+p.getName());
-    	    					p.sendMessage(m);
+    	        				p.sendMessage("§aSuccess! §fWelcome back, §6"+p.getName());
+    	        				
+    	                		giveKitItems(p, true);
     	        		    } else p.sendMessage("§cInvalid password. §fPlease try again.");
     	        		} else p.sendMessage("You need an account. Please register at §aamongdemons.com");
     				} catch (SQLException e) {
@@ -164,12 +146,18 @@ public class plugin extends JavaPlugin {
     				}
             	}	
         	}
+        } else if (label.equalsIgnoreCase("claimkit") || label.equalsIgnoreCase("claimkits")) {
+        	if (l.isLoggedIn(p)) {
+        		giveKitItems(p, false);
+        	} else l.loginMessage(p);
         } else if (label.equalsIgnoreCase("kits") || label.equalsIgnoreCase("kit") || label.equalsIgnoreCase("shop")) {
         	p.sendMessage("You can trade §bsouls §ffor §6kits §fat §aamongdemons.com");
         } else if (label.equalsIgnoreCase("help") || label.equalsIgnoreCase("info")) {
         	p.sendMessage("Server §6info §fat §aamongdemons.com/minecraft/server-info");
         } else if (label.equalsIgnoreCase("map")) {
         	p.sendMessage("Need a map? We have one at §aamongdemons.com");
+        } else if (label.equalsIgnoreCase("register") || label.equalsIgnoreCase("reg") || label.equalsIgnoreCase("r")) {
+        	p.sendMessage("Register on our website. §aamongdemons.com");
         } else if (label.equalsIgnoreCase("souls") || label.equalsIgnoreCase("s")) {
         	if (l.isLoggedIn(p)) {
         		if (args.length == 0) {
@@ -270,4 +258,63 @@ public class plugin extends JavaPlugin {
     	}
     	return result; 
     }
+    
+    public static void reloadConnection(Player p) {
+    	provider.getBalance(p);
+    }
+    
+    public void giveKitItems(Player p, boolean isLogin) {
+    	try {
+    		// give items
+    		String items_sql = "SELECT item, count FROM login_items WHERE user='"+p.getName()+"'";
+    		ResultSet items_results = connection.prepareStatement(items_sql).executeQuery();
+    		
+    		int total = 0;
+    		if(items_results.last()) {
+    			total = items_results.getRow();
+    		   items_results.beforeFirst();
+    		}
+    		
+    		if (total == 0 && !isLogin)
+    			p.sendMessage("You have no kits to claim.\nGet some from §aamongdemons.com/minecraft/kits/");
+    		
+    		if (hasAvaliableSlot(p, total)) {
+        		String m = "";
+        		while(items_results.next()){    	    	        	        
+        			p.getInventory().addItem(new ItemStack(Material.getMaterial(items_results.getString(1)), items_results.getInt(2)));
+        			
+        			if (m.isEmpty())
+        				m = "You received: ";
+        			else
+        				m += ", ";
+        			m += "§6"+items_results.getInt(2)+" §f"+items_results.getString(1);
+                }
+        		
+        		String cleanup = "DELETE FROM login_items WHERE user='"+p.getName()+"'";
+                connection.prepareStatement(cleanup).execute();
+                
+				if (!m.equals(""))
+					p.sendMessage(m);
+    		
+    		} else p.sendMessage("§cNo space for kit items.\n§fClear your inventory and type: /claimkits");
+    	} catch (SQLException e) {
+			e.printStackTrace();
+		}
+    }
+    
+    public boolean hasAvaliableSlot(Player player,int howmanyclear){
+    	ItemStack[] inv = player.getInventory().getStorageContents();
+    	int check=0;
+    	for (ItemStack item: inv) {
+	    	if(item == null) {
+	    		check++;
+	    	}
+    	}
+
+    	if (check>=howmanyclear) {
+    		return true;
+    	} else {
+    		return false;
+    	}
+	}
 }
