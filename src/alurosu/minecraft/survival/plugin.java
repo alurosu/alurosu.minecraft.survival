@@ -138,7 +138,7 @@ public class plugin extends JavaPlugin {
     	        				
     	                		giveKitItems(p, true);
     	        		    } else p.sendMessage("§cInvalid password. §fPlease try again.");
-    	        		} else p.sendMessage("You need an account. Please register at §aamongdemons.com");
+    	        		} else p.sendMessage("We didn't find any account with your username: §6"+p.getName()+"§f. Change your username or register at §aamongdemons.com");
     				} catch (SQLException e) {
     					e.printStackTrace();
     				} catch (NoSuchAlgorithmException e) {
@@ -157,7 +157,7 @@ public class plugin extends JavaPlugin {
         } else if (label.equalsIgnoreCase("map")) {
         	p.sendMessage("Need a map? We have one at §aamongdemons.com");
         } else if (label.equalsIgnoreCase("register") || label.equalsIgnoreCase("reg") || label.equalsIgnoreCase("r")) {
-        	p.sendMessage("Register on our website. §aamongdemons.com");
+        	p.sendMessage("Register on our website: §aamongdemons.com");
         } else if (label.equalsIgnoreCase("souls") || label.equalsIgnoreCase("s")) {
         	if (l.isLoggedIn(p)) {
         		if (args.length == 0) {
@@ -183,6 +183,11 @@ public class plugin extends JavaPlugin {
 												connection.prepareStatement(update).execute();
 												
 				        						p.sendMessage("You gave "+displaySouls(amount)+" to §6"+args[1]+"§f");
+				        						
+				        						Player receiver = Bukkit.getPlayer(args[1]);
+		        								if (receiver != null) {
+		        									receiver.sendMessage("§6"+p.getName()+"§f gave you "+displaySouls(amount));
+		        								}
 			            	        		} else p.sendMessage("The user §6"+args[1]+"§f does not exist");
 
 										} catch (SQLException e) {
