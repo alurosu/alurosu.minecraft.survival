@@ -6,6 +6,7 @@ import java.util.Map;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
@@ -17,7 +18,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 public class listener implements Listener{	
 	private Map<Player, String> coords = new HashMap<>();
-	private Map<Player, Boolean> isLoggedIn = new HashMap<>();
+	public Map<Player, Boolean> isLoggedIn = new HashMap<>();
 	private Map<Player, String> IPqueue = new HashMap<>();
 	
     @EventHandler
@@ -102,6 +103,13 @@ public class listener implements Listener{
     		}
     	}
     }
+    
+    @EventHandler
+    public void onPlayerDeathEvent(PlayerDeathEvent event) {
+    	Player p = event.getEntity();
+    	p.sendMessage("§7You died at "+ (int)p.getLocation().getX() + " / " + (int)p.getLocation().getY() + " / " + (int)p.getLocation().getZ() + " in '" + p.getLocation().getWorld().getName() + "'");
+    }
+    
     
     public void doLogin(Player p) {
     	isLoggedIn.put(p, true);

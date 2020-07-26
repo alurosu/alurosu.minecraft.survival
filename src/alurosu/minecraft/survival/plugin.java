@@ -15,6 +15,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitScheduler;
 
 import net.milkbowl.vault.economy.Economy;
 
@@ -25,7 +26,7 @@ public class plugin extends JavaPlugin {
 	
 	static Connection connection;
 	static String help;
-	static double tax;
+	static int soulsAt10minutes;
 	
     public static Economy provider;
     public PluginManager pluginManager;
@@ -46,15 +47,15 @@ public class plugin extends JavaPlugin {
     	db_user = config.getString("mysql.user");
     	db_pass = config.getString("mysql.pass");
 		db_url = "jdbc:mysql://"+config.getString("mysql.url")+":3306/" + config.getString("mysql.name")+"?useSSL=false&autoReconnect=true";
-		tax = config.getDouble("tax");
+		soulsAt10minutes = config.getInt("soulsAt10minutes");
     	
         getServer().getPluginManager().registerEvents(l, this);
         
 		help = "How to use §bsouls§f:";
 		help += "\n/souls §7- shows how many souls you have§f";
 		help += "\n/souls §6give§f [player] [quantity] §7- give souls to another player§f";
-		help += "\n/souls §6buy§f [quantity] §7- trade levels for souls§f";
-		help += "\n/souls §6sell§f [quantity] §7- trade souls for levels; tax: "+tax+"%";
+		help += "\n/souls §6sell§f [quantity] §7- trade souls for levels";
+		help += "\n§fNeed §bsouls§f? Click the link to learn more: \n§aamongdemons.com/minecraft/server-info/#get-souls";
         
         try {
             Class.forName("com.mysql.jdbc.Driver");
@@ -70,6 +71,32 @@ public class plugin extends JavaPlugin {
         }
         
         hookVault();
+        
+        BukkitScheduler scheduler = getServer().getScheduler();
+        scheduler.scheduleSyncRepeatingTask(this, new Runnable() {
+            @Override
+            public void run() {
+            	String in = "(";
+            	for(Player p: Bukkit.getOnlinePlayers()){
+            		if (l.isLoggedIn.get(p)) {
+    					in += "'"+p.getName()+"',";
+            			p.sendTitle("", "                                                §6+"+soulsAt10minutes+" §bsouls§f", 10, 70, 10);
+            		}
+        		}
+            	in += "'')";
+            	
+            	try {
+        	    	plugin.connection = plugin.getConnection();
+
+        	    	// update souls
+        	    	String sql = "UPDATE users SET souls = souls + "+soulsAt10minutes+" WHERE user IN "+in;
+            		plugin.connection.prepareStatement(sql).execute();
+                        
+        		} catch (SQLException e) {
+        			e.printStackTrace();
+        		}
+            }
+        }, 0L, 12000L); // 20L = 1 sec - 12000L = 10 min
     }
     
     public void hookVault() {
@@ -198,40 +225,22 @@ public class plugin extends JavaPlugin {
         					} else p.sendMessage("You can't send §bsouls§f to yourself");
         				} else showError = true;
         			} else if (args[0].equals("buy")) {       				
-        				if (args.length == 2) {
-	        				if (args[1].matches("\\-?\\d+")) {
-	        					int amount = Integer.parseInt(args[1]);
-	        					if (amount > 0) {
-		        					int level = p.getLevel();
-		        					level -= amount;
-		        					if (level >= 0) {
-			        					provider.depositPlayer(p, amount);
-		        						
-		        						p.setLevel(level);
-		        						p.sendMessage("You bought "+displaySouls(amount));
-		        					} else p.sendMessage("You need §6"+amount+"§f levels to buy "+displaySouls(amount));
-	        					} else p.sendMessage("[quantity] needs to be over §60");
-	        				} else showError = true;
-        				} else showError = true;
+        				p.sendMessage("Feature changed: You now get §6"+soulsAt10minutes+" §bsouls§f every 10 minutes.");
         			} else if (args[0].equals("sell")) {
         				if (args.length == 2) {
 	        				if (args[1].matches("\\-?\\d+")) {
 	        					int amount = Integer.parseInt(args[1]);
-	        					if (amount > 1) {
+	        					if (amount > 0) {
 	        						if (provider.has(p, amount)) {
 			        					provider.withdrawPlayer(p, amount);
 			        					
 			        					int level = p.getLevel();
-			        					int diff = (int)(amount-amount*tax/100);
-			        					level += diff;
+			        					level += amount;
 			        					p.setLevel(level);
 			        					
-			        					if (diff==1)
-		        							p.sendMessage("You sold "+displaySouls(amount)+" for §6"+diff+"§f level");
-			        					else
-			        						p.sendMessage("You sold "+displaySouls(amount)+" for §6"+diff+"§f levels");
+			        					p.sendMessage("You sold "+displaySouls(amount)+" for §6"+amount+"§f levels");
 	        						} else p.sendMessage("You don't have enough §bsouls.");
-	        					} else p.sendMessage("[quantity] needs to be over §61");
+	        					} else p.sendMessage("[quantity] needs to be over §60");
 	        				} else showError = true;
         				} else showError = true;
         			} else showError = true;

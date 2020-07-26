@@ -3,4 +3,4 @@ mysql:
   pass: ****
   name: ****
   url: ****
-tax: 20
+soulsAt10minutes: 5
