@@ -54,7 +54,7 @@ public class plugin extends JavaPlugin {
 		help = "How to use §bsouls§f:";
 		help += "\n/souls §7- shows how many souls you have§f";
 		help += "\n/souls §6give§f [player] [quantity] §7- give souls to another player§f";
-		help += "\n/souls §6sell§f [quantity] §7- trade souls for levels";
+		help += "\n/souls §6convert§f [quantity] §7- trade souls for levels";
 		help += "\n§fNeed §bsouls§f? Click the link to learn more: \n§aamongdemons.com/minecraft/server-info/#get-souls";
         
         try {
@@ -195,38 +195,38 @@ public class plugin extends JavaPlugin {
         			if (args[0].equals("give")) {
         				// give souls
         				if (args.length == 3) {
-        					if (!args[1].equals(p.getName())) {
-	        					int amount = Integer.parseInt(args[2]);
-	        					if (amount > 0) {
-	        						if (provider.has(p,  amount)) {
-		        						try {
-			        						connection = getConnection();
-			        						
-			        						String target_sql = "SELECT souls FROM users WHERE user='"+args[1]+"'";
-			            	        		ResultSet target_results = connection.prepareStatement(target_sql).executeQuery();
-			            	        		if (target_results.first()) {
-			            	        			provider.withdrawPlayer(p, amount);
-												String update = "UPDATE users SET souls = souls + "+amount+" WHERE user='"+args[1]+"'";
-												connection.prepareStatement(update).execute();
-												
-				        						p.sendMessage("You gave "+displaySouls(amount)+" to §6"+args[1]+"§f");
+    						try {
+	        					if (!args[1].equals(p.getName())) {
+		        					int amount = Integer.parseInt(args[2]);
+		        					if (amount > 0) {
+		        						if (provider.has(p,  amount)) {
+				        						connection = getConnection();
 				        						
-				        						Player receiver = Bukkit.getPlayer(args[1]);
-		        								if (receiver != null) {
-		        									receiver.sendMessage("§6"+p.getName()+"§f gave you "+displaySouls(amount));
-		        								}
-			            	        		} else p.sendMessage("The user §6"+args[1]+"§f does not exist");
-
-										} catch (SQLException e) {
-											e.printStackTrace();
-										}
-	        						} else p.sendMessage("You don't have enough §bsouls.");
-	        					} else p.sendMessage("[quantity] needs to be over §60");
-        					} else p.sendMessage("You can't send §bsouls§f to yourself");
+				        						String target_sql = "SELECT souls FROM users WHERE user='"+args[1]+"'";
+				            	        		ResultSet target_results = connection.prepareStatement(target_sql).executeQuery();
+				            	        		if (target_results.first()) {
+				            	        			provider.withdrawPlayer(p, amount);
+													String update = "UPDATE users SET souls = souls + "+amount+" WHERE user='"+args[1]+"'";
+													connection.prepareStatement(update).execute();
+													
+					        						p.sendMessage("You gave "+displaySouls(amount)+" to §6"+args[1]+"§f");
+					        						
+					        						Player receiver = Bukkit.getPlayer(args[1]);
+			        								if (receiver != null) {
+			        									receiver.sendMessage("§6"+p.getName()+"§f gave you "+displaySouls(amount));
+			        								}
+				            	        		} else p.sendMessage("The user §6"+args[1]+"§f does not exist");
+		        						} else p.sendMessage("You don't have enough §bsouls.");
+		        					} else p.sendMessage("[quantity] needs to be over §60");
+	        					} else p.sendMessage("You can't send §bsouls§f to yourself");
+    						} catch (Exception e) {
+								showError = true;
+								e.printStackTrace();
+							}
         				} else showError = true;
         			} else if (args[0].equals("buy")) {       				
         				p.sendMessage("Feature changed: You now get §6"+soulsAt10minutes+" §bsouls§f every 10 minutes.");
-        			} else if (args[0].equals("sell")) {
+        			} else if (args[0].equals("sell") || args[0].equals("convert")) {
         				if (args.length == 2) {
 	        				if (args[1].matches("\\-?\\d+")) {
 	        					int amount = Integer.parseInt(args[1]);
@@ -238,7 +238,7 @@ public class plugin extends JavaPlugin {
 			        					level += amount;
 			        					p.setLevel(level);
 			        					
-			        					p.sendMessage("You sold "+displaySouls(amount)+" for §6"+amount+"§f levels");
+			        					p.sendMessage("You converted "+displaySouls(amount)+" for §6"+amount+"§f levels");
 	        						} else p.sendMessage("You don't have enough §bsouls.");
 	        					} else p.sendMessage("[quantity] needs to be over §60");
 	        				} else showError = true;
