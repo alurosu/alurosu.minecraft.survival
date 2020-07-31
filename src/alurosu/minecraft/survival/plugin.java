@@ -16,6 +16,10 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
+import org.dynmap.DynmapAPI;
+import org.dynmap.markers.Marker;
+import org.dynmap.markers.MarkerIcon;
+import org.dynmap.markers.MarkerSet;
 
 import net.milkbowl.vault.economy.Economy;
 
@@ -23,10 +27,13 @@ public class plugin extends JavaPlugin {
 	private static String db_user;
 	private static String db_pass;
 	private static String db_url;
+	private static DynmapAPI dapi;
+	private static MarkerSet player_markers;
 	
 	static Connection connection;
 	static String help;
 	static int soulsAt10minutes;
+	static int markerCost;
 	
     public static Economy provider;
     public PluginManager pluginManager;
@@ -48,8 +55,9 @@ public class plugin extends JavaPlugin {
     	db_pass = config.getString("mysql.pass");
 		db_url = "jdbc:mysql://"+config.getString("mysql.url")+":3306/" + config.getString("mysql.name")+"?useSSL=false&autoReconnect=true";
 		soulsAt10minutes = config.getInt("soulsAt10minutes");
+		markerCost = config.getInt("markerCost");
     	
-        getServer().getPluginManager().registerEvents(l, this);
+		pluginManager.registerEvents(l, this);
         
 		help = "How to use §bsouls§f:";
 		help += "\n/souls §7- shows how many souls you have§f";
@@ -97,6 +105,13 @@ public class plugin extends JavaPlugin {
         		}
             }
         }, 0L, 12000L); // 20L = 1 sec - 12000L = 10 min
+        
+	    dapi = (DynmapAPI) pluginManager.getPlugin("dynmap");
+	    if (dapi!=null) {
+	    	player_markers = dapi.getMarkerAPI().getMarkerSet("player_markers");
+	    	if (player_markers == null)
+	    		player_markers = dapi.getMarkerAPI().createMarkerSet("player_markers", "player_markers", dapi.getMarkerAPI().getMarkerIcons(), false);
+	    }
     }
     
     public void hookVault() {
@@ -173,6 +188,37 @@ public class plugin extends JavaPlugin {
     				}
             	}	
         	}
+        } else if (label.equalsIgnoreCase("addmarker")) {
+        	if (l.isLoggedIn(p)) {
+        		if (dapi != null) {
+        			if (provider.has(p, markerCost)) {
+	        			String id = p.getName() + "-" + (int)p.getLocation().getX() + "-" + (int)p.getLocation().getZ() + "-" + p.getLocation().getWorld().getName();
+	        			String msg = "";
+	                    for (int i = 0; i < args.length; i++) {
+	                        msg = msg + args[i] + " ";
+	                    }
+
+	        			MarkerIcon icon = dapi.getMarkerAPI().getMarkerIcon("comment");
+	        			player_markers.createMarker(id, msg, p.getLocation().getWorld().getName(), p.getLocation().getX(), p.getLocation().getY(), p.getLocation().getZ(), icon, true);
+	        			
+	        			provider.withdrawPlayer(p, markerCost);
+	        			p.sendMessage("§aSuccess! §fMap marker created.");
+        			} else p.sendMessage("A map marker costs §6"+markerCost+" §bsouls§f. You need more.");
+        		} else p.sendMessage("Dynmap API not connected.");
+        	} else l.loginMessage(p);
+        } else if (label.equalsIgnoreCase("delmarker") || label.equalsIgnoreCase("deletemarker") || label.equalsIgnoreCase("removemarker")) {
+        	if (l.isLoggedIn(p)) {
+        		if (dapi != null) {
+        			String id = p.getName() + "-" + (int)p.getLocation().getX() + "-" + (int)p.getLocation().getZ() + "-" + p.getLocation().getWorld().getName();
+        			Marker f = player_markers.findMarker(id);
+        			
+        			if (f != null) {
+	        			f.deleteMarker();
+	        			provider.depositPlayer(p, markerCost);
+	        			p.sendMessage("Map marker deleted. You received §6"+markerCost+" §bsouls");
+        			} else p.sendMessage("Can't find a marker at your location.");
+        		} else p.sendMessage("Dynmap API not connected.");
+        	} else l.loginMessage(p);
         } else if (label.equalsIgnoreCase("claimkit") || label.equalsIgnoreCase("claimkits")) {
         	if (l.isLoggedIn(p)) {
         		giveKitItems(p, false);
@@ -183,7 +229,7 @@ public class plugin extends JavaPlugin {
         	p.sendMessage("Server §6info §fat §aamongdemons.com/minecraft/server-info");
         } else if (label.equalsIgnoreCase("map")) {
         	p.sendMessage("Need a map? We have one at §aamongdemons.com");
-        } else if (label.equalsIgnoreCase("register") || label.equalsIgnoreCase("reg") || label.equalsIgnoreCase("r")) {
+        } else if (label.equalsIgnoreCase("register") || label.equalsIgnoreCase("reg")) {
         	p.sendMessage("Register on our website: §aamongdemons.com");
         } else if (label.equalsIgnoreCase("souls") || label.equalsIgnoreCase("s")) {
         	if (l.isLoggedIn(p)) {

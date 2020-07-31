@@ -4,3 +4,4 @@ mysql:
   name: ****
   url: ****
 soulsAt10minutes: 5
+markerCost: 1000
