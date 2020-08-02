@@ -108,9 +108,7 @@ public class plugin extends JavaPlugin {
         
 	    dapi = (DynmapAPI) pluginManager.getPlugin("dynmap");
 	    if (dapi!=null) {
-	    	player_markers = dapi.getMarkerAPI().getMarkerSet("player_markers");
-	    	if (player_markers == null)
-	    		player_markers = dapi.getMarkerAPI().createMarkerSet("player_markers", "player_markers", dapi.getMarkerAPI().getMarkerIcons(), false);
+	    	player_markers = dapi.getMarkerAPI().getMarkerSet("markers");
 	    }
     }
     
@@ -198,7 +196,7 @@ public class plugin extends JavaPlugin {
 	                        msg = msg + args[i] + " ";
 	                    }
 
-	        			MarkerIcon icon = dapi.getMarkerAPI().getMarkerIcon("comment");
+	        			MarkerIcon icon = dapi.getMarkerAPI().getMarkerIcon("sign");
 	        			player_markers.createMarker(id, msg, p.getLocation().getWorld().getName(), p.getLocation().getX(), p.getLocation().getY(), p.getLocation().getZ(), icon, true);
 	        			
 	        			provider.withdrawPlayer(p, markerCost);
