@@ -3,12 +3,15 @@ package alurosu.minecraft.survival;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockDispenseEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
@@ -110,6 +113,30 @@ public class listener implements Listener{
     	p.sendMessage("§7You died at "+ (int)p.getLocation().getX() + " / " + (int)p.getLocation().getY() + " / " + (int)p.getLocation().getZ() + " in '" + p.getLocation().getWorld().getName() + "'");
     }
     
+    @EventHandler
+    public void onPlayerBucketEmptyEvent(PlayerBucketEmptyEvent event) {
+    	Player p = event.getPlayer();
+    	if (isLoggedIn.get(p)) {
+    		if(event.getBucket() == Material.LAVA_BUCKET) {
+    			int y = event.getBlockClicked().getY();
+    			if (y>62) {
+    				p.sendMessage("§cAnti-grief: §fYou can't place lava above sea level. (height 62)");
+    				event.setCancelled(true);
+    			}
+    		}
+    	}
+    }
+    
+    @EventHandler
+    public void onBlockDispenseEvent(BlockDispenseEvent event) {
+		if(event.getItem().getType() == Material.LAVA_BUCKET) {
+			int y = event.getBlock().getY();
+			if (y>62) {
+				event.setCancelled(true);
+			}
+		}
+    }
+    
     
     public void doLogin(Player p) {
     	isLoggedIn.put(p, true);
@@ -122,6 +149,6 @@ public class listener implements Listener{
     }
     
     public void loginMessage(Player p) {
-    	p.sendMessage("/login [pass] or register at §aamongdemons.com");
+    	p.sendMessage("Register at §aamongdemons.com§f then use §7/login password ");
     }
 }

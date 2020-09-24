@@ -196,7 +196,7 @@ public class plugin extends JavaPlugin {
 	                        msg = msg + args[i] + " ";
 	                    }
 
-	        			MarkerIcon icon = dapi.getMarkerAPI().getMarkerIcon("sign");
+	        			MarkerIcon icon = dapi.getMarkerAPI().getMarkerIcon("comment");
 	        			player_markers.createMarker(id, msg, p.getLocation().getWorld().getName(), p.getLocation().getX(), p.getLocation().getY(), p.getLocation().getZ(), icon, true);
 	        			
 	        			provider.withdrawPlayer(p, markerCost);
