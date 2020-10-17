@@ -1,8 +1,8 @@
 name: amongdemons.com
 main: alurosu.minecraft.survival.plugin
-version: 3.1
+version: 3.2
 depend: [Vault, dynmap]
-loadbefore: [GriefPrevention, AdvancedTeleport]
+loadbefore: [GriefPrevention, AdvancedTeleport, PowerRanks]
 api-version: 1.13
 author: alurosu
 website: alurosu.com
@@ -14,7 +14,7 @@ commands:
   register:
     description: register
     usage: /register
-    aliases: [r, reg]
+    aliases: [reg]
   kits:
     description: kits
     usage: /kits
@@ -34,3 +34,10 @@ commands:
     description: help
     usage: /help
     aliases: [info]
+  addmarker:
+    description: addmarker
+    usage: /addmarker
+  delmarker:
+    description: delmarker
+    usage: /delmarker
+    aliases: [deletemarker, removemarker]

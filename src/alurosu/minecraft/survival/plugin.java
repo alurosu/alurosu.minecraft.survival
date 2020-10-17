@@ -44,6 +44,8 @@ public class plugin extends JavaPlugin {
 	@Override
     public void onLoad() {
         pluginManager = getServer().getPluginManager();
+        
+        hookVault();
     }
 	
     @Override
@@ -77,8 +79,6 @@ public class plugin extends JavaPlugin {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        
-        hookVault();
         
         BukkitScheduler scheduler = getServer().getScheduler();
         scheduler.scheduleSyncRepeatingTask(this, new Runnable() {
