@@ -11,6 +11,7 @@ import org.bukkit.event.block.BlockDispenseEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerAdvancementDoneEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -137,6 +138,14 @@ public class listener implements Listener{
 		}
     }
     
+    @EventHandler
+    public void onPlayerAdvancementDoneEvent(PlayerAdvancementDoneEvent event) {
+    	Player p = event.getPlayer();
+		if (!event.getAdvancement().getKey().toString().contains("recipes/")) {
+			plugin.provider.depositPlayer(p, 20);
+			p.sendTitle("", "                                                 §6+20 §bsouls§f", 10, 70, 10);
+		}
+    }
     
     public void doLogin(Player p) {
     	isLoggedIn.put(p, true);
