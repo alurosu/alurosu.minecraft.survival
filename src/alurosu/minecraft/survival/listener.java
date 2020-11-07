@@ -8,11 +8,14 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockDispenseEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerAdvancementDoneEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
@@ -28,6 +31,7 @@ public class listener implements Listener{
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
     	Player p = event.getPlayer();
+    	p.setInvulnerable(false);
     	String[] parts = p.getAddress().toString().split(":");
     	
     	if (IPqueue.containsValue(parts[0])) {
@@ -36,7 +40,6 @@ public class listener implements Listener{
         	IPqueue.put(p, parts[0]);
         	isLoggedIn.put(p, false);
         	coords.put(p, p.getLocation().getX()+"-"+p.getLocation().getZ());
-        	p.setInvulnerable(true);
         	plugin.reloadConnection(p);
     	}
     }
@@ -147,10 +150,30 @@ public class listener implements Listener{
 		}
     }
     
+    @EventHandler
+    public void onEntityDamage(EntityDamageEvent event){
+    	double damage = event.getDamage();
+    	
+        if(event instanceof EntityDamageByEntityEvent){
+            EntityDamageByEntityEvent edbeEvent = (EntityDamageByEntityEvent)event;
+            if(!(edbeEvent.getDamager() instanceof Player)){
+            	event.setDamage(damage*2);
+            }
+        } else event.setDamage(damage*2);
+    }
+    
+    @EventHandler
+    public void onPlayerCommandPreprocessEvent(PlayerCommandPreprocessEvent event){
+    	Player p = event.getPlayer();
+    	if (!isLoggedIn.get(p) && !(event.getMessage().contains("/l") || event.getMessage().contains("/login"))) {
+    		event.setCancelled(true);
+    		loginMessage(p);
+    	} 
+    }
+    
     public void doLogin(Player p) {
     	isLoggedIn.put(p, true);
     	IPqueue.remove(p);
-    	p.setInvulnerable(false);
     }
     
     public boolean isLoggedIn(Player p) {
@@ -158,6 +181,8 @@ public class listener implements Listener{
     }
     
     public void loginMessage(Player p) {
-    	p.sendMessage("Register at §aamongdemons.com§f then use §7/login password ");
+    	p.sendMessage("Register on our website §aamongdemons.com");
+    	p.sendMessage("§fthen use §7/login password");
+		p.sendTitle("/login password", "Use your §aamongdemons.com§f account", 10, 70, 10);
     }
 }

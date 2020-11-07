@@ -330,7 +330,7 @@ public class plugin extends JavaPlugin {
     		int total = 0;
     		if(items_results.last()) {
     			total = items_results.getRow();
-    		   items_results.beforeFirst();
+    			items_results.beforeFirst();
     		}
     		
     		if (total == 0 && !isLogin)
