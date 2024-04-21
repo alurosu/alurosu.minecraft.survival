@@ -1,2 +1,2 @@
 # alurosu.minecraft.survival
-https://amongdemons.com/
+Spigot & Bukkit customized plugin for Minecraft servers
